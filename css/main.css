@@ -1,0 +1,320 @@
+html
+{
+  scrollbar-width: none;
+  scrollbar-color: rgba(100,100,100,0.75) rgba(0,0,0,0);
+}
+
+body
+{
+    min-height: 100vh;
+}
+
+.cursor-none
+{
+    cursor: none;
+}
+
+nav
+{
+  background-image: linear-gradient(to bottom, #000000, rgba(255,255,255,0));
+}
+
+header
+{
+  height: 25rem;
+  z-index: -1;
+}
+
+header:after
+{
+  content: '';
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom,rgba(255,255,255,0) 85%,black);
+  background-blend-mode: multiply;
+  position: absolute;
+  top: 0;
+}
+
+#pictureInPictureToggleButton
+{
+    display: none;
+}
+
+/**
+
+ ---- Range Input Style
+
+ */
+
+progress::-moz-progress-bar, progress::-webkit-progress-value, progress::-webkit-progress-bar {
+    border-radius: 0.5rem 0 0 0.5rem;
+    position: relative;
+    background-color: #ff7800;
+}
+
+progress[value="100"]::-moz-progress-bar, progress[value="100"]::-webkit-progress-value, progress[value="100"]::-webkit-progress-bar {
+    border-radius: 0.5rem;
+}
+
+input[type=range] {
+    -webkit-appearance: none;
+    background: transparent;
+}
+
+input[type="range"]::-moz-range-track
+{
+    background-color: #fff;
+}
+
+input[type="range"]::-moz-range-progress
+{
+    background-color: #ff7800;
+}
+
+input[type="range"]::-moz-range-thumb, input[type="range"]::-webkit-slider-thumb
+{
+    background-color: #ff7800;
+    height: 0.65rem !important;
+    width: 0.65rem !important;
+    border-color: white;
+}
+
+
+input[type="range"]::-ms-thumb
+{
+    background-color: white;
+    height: 0.5rem !important;
+    width: 0.5rem !important;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+    cursor: pointer;
+    background: #ff7800;
+    border-radius: 0.5rem;
+}
+input[type="range"]:focus::-webkit-slider-runnable-track {
+    background: #ff7800;
+}
+
+input[type="range"]::-ms-track {
+    cursor: pointer;
+    background: transparent;
+    border-color: transparent;
+    color: transparent;
+}
+input[type="range"]::-ms-fill-lower {
+    background: #ff7800;
+    border-radius: 0.5rem;
+}
+input[type="range"]:focus::-ms-fill-lower {
+    background: #ff7800;
+}
+input[type="range"]::-ms-fill-upper {
+    background: #ff7800;
+    border-radius: 0.5rem;
+}
+input[type="range"]:focus::-ms-fill-upper {
+    background: #ff7800;
+}
+
+
+
+
+
+#progress-cursor
+{
+    transform: translateX(-50%);
+    display: none;
+}
+
+#progress-wrapper:hover > #progress-cursor
+{
+    display: block;
+}
+
+#playerControls > div:nth-child(2)
+{
+    background: linear-gradient(to top, black, rgba(0,0,0,0) );
+}
+
+#playerControls i
+{
+    cursor: pointer;
+}
+
+#playerControls i:hover
+{
+    color: #ff7800;
+}
+
+
+
+/**
+
+ ---- After Range Input Style
+
+ */
+
+video::cue {
+    opacity: 0;
+}
+
+#subtitles
+{
+    width: 100%;
+    text-align: center;
+    text-shadow: #000 0 0 5px, #000 0 0 15px;
+}
+
+.controlsWindow
+{
+    min-width: 16rem;
+    bottom: 0;
+    right: 0;
+    position: absolute;
+    background-color: #1a202c;
+    color: white;
+    font-size: 0.875rem;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 2rem;
+    z-index: 10;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-radius: 0.25rem;
+    max-height: 50vh;
+    /*overflow: scroll;*/
+}
+
+.controlsWindow:before
+{
+    content: '';
+    width: 10px;
+    height: 10px;
+    background-color: inherit;
+    transform: translate(-50%,50%) rotateZ(45deg);
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    z-index: 0;
+}
+
+.controlsWindow .active
+{
+    background-color: #e2e8f0;
+    color: #2d3748;
+}
+
+
+.figlist
+{
+  scrollbar-width: none;
+  scrollbar-color: rgba(100,100,100,0.75) rgba(0,0,0,0);
+}
+
+.figlist:hover
+{
+  scrollbar-width: thin;
+}
+
+.figlist svg
+{
+  width: 32px;
+  height: 32px;
+  margin: 6px 0 0 6px;
+}
+
+.figlist figure
+{
+    max-width: 4rem;
+}
+
+figure figcaption
+{
+  transform: translateY(100%);
+  transition-duration: .3s;
+  transition-timing-function: ease-in-out;
+}
+
+figure:hover figcaption
+{
+  transform: translateY(0%);
+}
+
+
+
+.loader {
+    --path: #E8E8E8;
+    --dot: #ff7800;
+    --duration: 3s;
+    --width: 150px;
+    --leftOffset: calc((var(--width) / 8) * 3.5);
+    --topOffset: calc((var(--width) / 8) * 6.5);
+    width: var(--width);
+    height: var(--width);
+    position: relative;
+}
+
+svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.loader polygon {
+    fill: none;
+    stroke: var(--path);
+    stroke-width: 10px;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    stroke-dasharray: 145, 76, 145, 76;
+    stroke-dashoffset: 0;
+    animation: pathTriangle var(--duration) cubic-bezier(0.785, 0.135, 0.15, 0.86) infinite;
+    animation-play-state: paused;
+}
+
+.loader:before {
+    content: '';
+    width: calc(var(--width) / 8);
+    height: calc(var(--width) / 8);
+    border-radius: 50%;
+    position: absolute;
+    display: block;
+    background: var(--dot);
+    top: var(--topOffset);
+    left: var(--leftOffset);
+    transform: translate(-200%, -350%);
+    animation: dotTriangle var(--duration) cubic-bezier(0.785, 0.135, 0.15, 0.86) infinite;
+    animation-play-state: paused;
+}
+
+.triangle polygon, .triangle:before
+{
+    animation-play-state: running;
+}
+
+@keyframes pathTriangle {
+    33% {
+        stroke-dashoffset: 74;
+    }
+    66% {
+        stroke-dashoffset: 147;
+    }
+    100% {
+        stroke-dashoffset: 221;
+    }
+}
+
+@keyframes dotTriangle {
+    33% {
+        transform: translate(0, 0);
+    }
+    66% {
+        transform: translate(200%, -350%);
+    }
+    100% {
+        transform: translate(-200%, -350%);
+    }
+}

@@ -1,0 +1,376 @@
+<!doctype html>
+<html class="no-js bg-black" lang="">
+
+<head>
+    <meta charset="utf-8">
+    <title>Arcadia</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Place favicon.ico in the root directory -->
+
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.0-1/css/all.min.css">
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/transitions.css">
+</head>
+
+<body>
+<!--[if IE]>
+<p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience and security.</p>
+<![endif]-->
+
+<!-- Add your site or application content here -->
+<div id="app" class="w-full h-full" style="height:100vh;">
+    <div class="w-full h-full relative flex flex-col justify-center" :class="{'cursor-none': !display}" id="player" @mousemove="displayAll">
+        <video class="object-contain h-full" controlslist="nodownload noremoteplayback disablePictureInPicture"
+               v-on:timeupdate="updateProgress"
+               v-on:click="play"
+               @contextmenu.prevent="">
+            <source :src="video.source">
+            <track v-for="track in (video.subtitles ? video.subtitles : [])"
+                    kind="subtitles"
+                   :label="track.label"
+                   :srclang="track.srclang"
+                   :src="track.source"
+                   @cuechange="loadSubtitles"
+            />
+        </video>
+
+        <transition name="custom-bounce">
+            <div class="p-4 absolute z-10 flex items-center justify-center rounded-lg opacity-100" v-show="!isPlaying"
+                 style="top:50%;left:50%; transform: translate(-50%,-100%);background-color: rgba(0,0,0,0.5)">
+                <i class="fas fa-play cursor-pointer rounded-lg text-white text-2xl" id="playPrimary"
+                   v-on:click="play"></i>
+            </div>
+        </transition>
+        <div class="absolute top-0 flex justify-between px-6 pt-4 text-white text-2xl" v-show="!isPlaying">
+            <i class="fas fa-arrow-left cursor-pointer" v-show="!isPlaying"></i>
+            <i class="fab fa-chromecast cursor-pointer hidden"></i>
+        </div>
+
+
+        <div id="playerControls" class="absolute w-full text-white z-10 bottom-0 flex flex-col">
+            <div id="subtitles" class="text-xl mb-4">
+            </div>
+
+            <div class="w-full flex items-center px-2 pb-3 text-lg flex-wrap" v-show="display">
+                <div class="w-full flex mb-2 pr-1" v-show="displayProgress">
+                    <span id="timeIndicator" class="text-xs mx-3">00:00:00</span>
+                    <div id="progress-wrapper" class="relative flex items-center flex-1" style="min-width: 90%"
+                         v-on:mouseover="updateCursor"
+                         v-on:mouseout="hoverProgress = false">
+                        <progress id="movieProgress" max="100" value="0" class="h-1 rounded-lg w-full" v-on:click="goToPosition">
+                        </progress>
+                        <div id="progress-cursor" class="w-3 h-3 rounded-full absolute bg-orange-500 cursor-pointer" v-on:click="goToPosition" ></div>
+                    </div>
+                </div>
+
+                <i class="fas cursor-pointer mx-2" :class="{'fa-play': !isPlaying,'fa-pause': isPlaying}" id="playBtn"
+                   @click="play"></i>
+                <i class="fas fa-undo-alt md:block hidden ml-4 mr-1" @click="backwardsTenSeconds"></i>
+                <i class="fas fa-redo-alt md:block hidden mr-4 ml-2" @click="forwardsTenSeconds"></i>
+                <i class="fas fa-step-forward mx-2" v-show="video.hasOwnProperty('chapters')"></i>
+                <!-- Milieu -->
+
+                <div class="flex-1 mx-2">
+
+                </div>
+
+                <!-- Right -->
+                <div class="mr-2 ml-auto relative" @mouseover="displayControl = 'Langs', displayProgress = false" v-if="video.hasOwnProperty('audio') || video.hasOwnProperty('subtitles')">
+                    <i class="fas fa-language"></i>
+                    <div class="controlsWindow" id="langsDiv" v-show="displayControl === 'Langs'" @mouseout="displayControl = false, displayProgress = true">
+                        <div class="flex h-full overflow-hidden">
+
+                            <div class="flex flex-col overflow-scroll w-1/2 border-r border-gray-700">
+                                <span class="w-full pl-3 mb-2 text-xs"><i class="fas fa-pager"></i> Sous-titres</span>
+                                <div class="flex items-center w-full cursor-pointer py-2 hover:bg-gray-100 hover:text-gray-800 text-xs" :class="{'active': activeSubtitles === 'none'}" lang="none" @click.capture="setSubtitles">
+                                    <span class="px-1 text-gray-600 font-bold mx-4" style="font-size: .5rem;padding-top: 0.125rem;padding-bottom: 0.125rem;"><i class="fas" :class="{'fa-check': activeSubtitles === 'none', 'fa-ban': activeSubtitles !== 'none'}"></i></span><span>Aucuns</span>
+                                </div>
+                                <div class="flex items-center w-full cursor-pointer py-2 hover:bg-gray-100 hover:text-gray-800 text-xs" :class="{'active': activeSubtitles === track.srclang}" :lang="track.srclang" v-for="track in (video.subtitles ? video.subtitles : [{}])" @click.capture="setSubtitles">
+                                    <span class="px-1 rounded bg-gray-600 text-gray-800 font-bold mx-4" style="font-size: .5rem;padding-top: 0.125rem;padding-bottom: 0.125rem;">{{track.srclang.toUpperCase()}}</span><span>{{track.label}}</span>
+                                </div>
+                            </div>
+
+
+                            <div class="flex flex-col overflow-scroll w-1/2">
+                                <span class="w-full pl-3 mb-2 text-xs"><i class="fas fa-comment"></i> Audio</span>
+                                <div class="flex items-center w-full cursor-pointer py-2 hover:bg-gray-100 hover:text-gray-800 text-xs" :class="{'active': activeAudio === track.srclang}" v-for="track in (video.audio ? video.audio : [{}])">
+                                    <span class="px-1 rounded bg-gray-600 text-gray-800 text-xs font-bold mx-4" style="font-size: .5rem;padding-top: 0.125rem;padding-bottom: 0.125rem;">{{track.srclang.toUpperCase()}}</span><span>{{track.label}}</span>
+                                </div>
+                            </div>
+
+
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mx-2 relative" @mouseover="displayControl = 'Chapters', displayProgress = false" v-if="video.hasOwnProperty('chapters')">
+                    <i class="fas fa-list-ul "></i>
+                    <div class="controlsWindow" id="chaptersDiv" v-show="displayControl === 'Chapters'" @mouseout="displayControl = false, displayProgress = true">
+                        <span class="border-b border-white p-2 sticky">Épisodes</span>
+                        <div class="flex flex-col overflow-scroll">
+                            <div class="flex items-center text-xs p-2 cursor-pointer hover:bg-gray-100 hover:text-gray-800" v-for="episode in video.chapters">
+                                <img :src="episode.img" :alt="episode.season+' '+episode.episode" class="h-8 mr-2" v-if="episode.img != undefined && episode.hasOwnProperty('active')">
+                                <span>{{'Saison '+episode.season+' : épisode '+episode.episode }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mx-2 flex flex-col relative items-center justify-end p-1" v-bind:class="{'overflow-hidden': !displayVolume}" @mouseover="displayVolume = true, displayProgress = false" @mouseout="displayVolume = false, displayProgress = true">
+                    <i class="fas" v-bind:class="{'fa-volume-up': !muted,'fa-volume-off': muted}" v-on:click="mute" style="z-index: 5"></i>
+                    <input id="volumeRange" type="range" min="0" max="1" v-bind:value="volume" step="0.1" orient="vertical" class="absolute pb-6 h-32" @change.prevent="setVolume">
+                </div>
+                <i class="fas fa-expand mx-3 zoom-1-hover" @click="displayFullscreen"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!--<script src="js/vendor/jquery-3.4.1.min.js"></script>-->
+<script src="js/vendor/vue.js"></script>
+<script src="js/vendor/vue-router.js"></script>
+<script src="js/main.js" type="module"></script>
+
+<script>
+    let YourMovie = {
+        title: 'Your Movie',
+        source: 'videos/Your_File.webm',
+        chapters: [
+            {
+                season: 18,
+                episode: 12,
+                sysnopsis: 'Little description of the episode'
+            },
+            {
+                season: 18,
+                episode: 13,
+                sysnopsis: 'Little description of the episode',
+                img: 'img/tvshow_thumb.jpg'
+            },
+            {
+                season: 18,
+                episode: 14,
+                sysnopsis: 'Little description of the episode',
+                img: 'img/tvshow_thumb.jpg'
+            },
+            {
+                season: 18,
+                episode: 15,
+                sysnopsis: 'Little description of the episode',
+                img: 'img/tvshow_thumb.jpg',
+                active: true
+            },
+            {
+                season: 18,
+                episode: 16,
+                sysnopsis: 'Little description of the episode',
+                img: 'img/tvshow_thumb.jpg'
+            },
+            {
+                season: 18,
+                episode: 17,
+                sysnopsis: 'Little description of the episode'
+            },
+            {
+                season: 18,
+                episode: 18,
+                sysnopsis: 'Little description of the episode',
+                img: 'img/tvshow_thumb.jpg'
+            }
+        ],
+        audio: [
+            {
+                srclang: 'fr',
+                label: 'Français',
+                source: '',
+                default: true
+            },
+            {
+                srclang: 'jp',
+                label: 'Japonais',
+                source: '',
+                default: true
+            }
+        ],
+        subtitles: [
+            {
+                srclang: 'fr',
+                label: 'Français',
+                source: 'videos/Your_Movie_FR.vtt',
+                default: true
+            },
+            {
+                srclang: 'en',
+                label: 'English',
+                source: 'videos/Your_Movie_EN.vtt'
+            },
+        ]
+    };
+
+
+    let app = new Vue({
+        el: '#app',
+        data: {
+            video: YourMovie,
+            player: document.querySelector('video'),
+            isPlaying: false,
+            display: true,
+            hoverProgress: false,
+            volume: 1,
+            muted: false,
+            activeAudio: 'fr',
+            activeSubtitles: 'none',
+            displayVolume: false,
+            fullscreen: false,
+            displayProgress: true,
+            displayControl: false,
+            timeOut: null
+        },
+        methods: {
+            play: function(event) {
+                let player = document.querySelector('video');
+                if (this.isPlaying)
+                {
+                    player.pause();
+                    this.isPlaying = false;
+                }
+                else
+                {
+                    player.play();
+                    this.isPlaying = true;
+                }
+            },
+            updateProgress: function (event) {
+                let progress = document.querySelector('#movieProgress');
+                let player = document.querySelector('video');
+                let indicator = document.querySelector('#timeIndicator');
+                let cursor = document.querySelector('#progress-cursor');
+
+                let newValue = (player.currentTime / player.duration) * 100;
+
+                let hours = Math.floor(player.currentTime / 3600);
+                let minutes = Math.floor((player.currentTime - 3600 * hours) / 60);
+                let seconds = Math.floor((player.currentTime - 3600 * hours) - minutes * 60);
+
+                if (!this.hoverProgress)
+                {
+                    cursor.style.left = newValue+'%';
+                    progress.setAttribute('value', newValue.toString());
+                }
+
+                indicator.innerText = ((hours > 9) ? hours : '0'+hours)+':'+((minutes > 9) ? minutes : '0'+minutes)+':'+((seconds > 9) ? seconds : '0'+seconds);
+            },
+            updateCursor: function (event) {
+                this.hoverProgress = true;
+                let cursor = document.querySelector('#progress-cursor');
+                let currentTarget = event.currentTarget;
+                cursor.style.left = event.pageX - currentTarget.offsetLeft+'px';
+            },
+            goToPosition: function (event) {
+                this.hoverProgress = false;
+                let currentTarget = event.currentTarget;
+                let player = document.querySelector('video');
+                let progress = document.querySelector('#movieProgress');
+                let percent = (currentTarget.offsetLeft / currentTarget.parentElement.offsetWidth) * 100;
+                player.fastSeek((currentTarget.offsetLeft / currentTarget.parentElement.offsetWidth) * player.duration);
+            },
+            forwardsTenSeconds: function (event) {
+                let player = document.querySelector('video');
+                console.log(event.currentTarget);
+                //fixme group the forwards and backwards functions in one with data-attribute
+                player.fastSeek(player.currentTime + 10);
+            },
+            backwardsTenSeconds: function (event) {
+                let player = document.querySelector('video');
+                player.fastSeek(player.currentTime - 10);
+            },
+            setVolume: function (event) {
+                let player = document.querySelector('video');
+                player.volume = parseFloat(event.target.value);
+                this.volume = parseFloat(event.target.value);
+                if(this.muted)
+                {
+                    this.muted = false;
+                }
+            },
+            mute: function () {
+                let player = document.querySelector('video');
+                if (this.muted)
+                {
+                    player.volume = this.volume;
+                    this.muted = !this.muted;
+                }
+                else
+                {
+                    this.volume = player.volume;
+                    player.volume = 0;
+                    this.muted = !this.muted;
+                }
+            },
+            displayFullscreen: function () {
+                let player = document.querySelector('#player');
+                if (!this.fullscreen)
+                {
+                    player.requestFullscreen();
+                    this.fullscreen = true;
+                }
+                else
+                {
+                    document.exitFullscreen();
+                    this.fullscreen = false;
+                }
+            },
+            displayAll: function (event) {
+                if (this.isPlaying && this.display)
+                {
+                    clearInterval(this.timeOut);
+                    this.timeOut = setTimeout(() => {this.display = false }, 1000);
+                }
+                else if (this.isPlaying && !this.display)
+                {
+                    clearInterval(this.timeOut);
+                    this.display = true;
+                }
+                else
+                {
+                    this.display = true;
+                }
+            },
+            loadSubtitles: function (event) {
+                if (event.target.track.mode === 'showing')
+                {
+                    let texts = event.target.track;
+                    let subtitle = texts.activeCues[0];
+                    document.querySelector('#subtitles').textContent = (subtitle != undefined) ? subtitle.text : '';
+                }
+            },
+            setSubtitles: function (event) {
+                let lang = event.currentTarget.getAttribute('lang');
+                let player = document.querySelector('video');
+                for (let i = 0; i < player.textTracks.length; i++) {
+                    // For the 'subtitles-off' button, the first condition will never match so all will subtitles be turned off
+                    if (player.textTracks[i].language == lang) {
+                        player.textTracks[i].mode = 'showing';
+                    }
+                    else {
+                        player.textTracks[i].mode = 'hidden';
+                    }
+                }
+                this.activeSubtitles = lang;
+                this.displayLangs = false;
+            }
+        },
+        created: function () {
+            document.title = this.video.title;
+        }
+    });
+//FIXME Unsync when jumping in timeline in fullscreen
+//TODO Implement AudioTracks
+</script>
+
+</body>
+</html>
